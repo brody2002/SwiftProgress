@@ -5,25 +5,36 @@ struct MainView: View {
     @State private var rootWord: String = ""
     @State private var usedWords: [String] = []
     @State private var possibleWords: [String] = []
-    @State private var validWordsSet: Set<String> = [] // Load dictionary words during `onAppear`
+    @State private var validWordsSet: Set<String> = []
     @State private var errorTitle = ""
     @State private var errorMessage = ""
     @State private var showingError = false
-    @State private var showPossibleWords = false
+    @State private var showAnswerList = false
     @State private var isKeyboardVisible: Bool = false
     @State private var isGiveUpPressed: Bool = false
     @State private var restartID = UUID() // Add this to track restarts
+    @State private var answerList: [String] = []
+    @State private var score: Int = 0
 
     var body: some View {
         NavigationStack {
             withAnimation{
                 ZStack {
                     Color(red: 48/255, green: 48/255, blue: 48/255).ignoresSafeArea()
+                    
                     VStack {
+                        
                         Text("Word: \(rootWord)")
                             .bold()
                             .font(.system(size: 40))
                             .foregroundStyle(Color.white)
+                        
+                        Text("Score: \(usedWords.count)")
+                            .padding(.top,1)
+                            .padding(.bottom,6)
+                            .foregroundStyle(.white)
+                            .bold()
+                            
                         
                         List {
                             Section {
@@ -50,10 +61,11 @@ struct MainView: View {
                                     }
                                 }
                             }
-                            if showPossibleWords {
-                                Section(header: Text("Possible Words")) {
-                                    ForEach(possibleWords, id: \.self) { word in
+                            if showAnswerList {
+                                Section(header: Text("Missing Words")) {
+                                    ForEach(answerList, id: \.self) { word in
                                         Text(word)
+                                            .foregroundColor(.orange).bold()
                                     }
                                 }
                             }
@@ -79,14 +91,22 @@ struct MainView: View {
                             Button(action: {
                                 withAnimation {
                                     if isGiveUpPressed {
+                                        
                                         // Restart the view by updating the restartID
+                                        usedWords = []
+                                        answerList = []
                                         isGiveUpPressed = false
-                                        showPossibleWords = false
+                                        showAnswerList = false
                                         restartID = UUID()
                                         
                                     } else {
-                                        showPossibleWords = true
+                                        
+                                        compareLists()
+                                        print("answerlist below: ")
+                                        print(answerList)
+                                        showAnswerList = true
                                         isGiveUpPressed = true
+                                        
                                     }
                                 }
                             }) {
@@ -130,6 +150,12 @@ struct MainView: View {
             wordError(title: "Word not recognized", message: "You can't just make them up, you know!")
             return
         }
+        guard charCheck(word:answer) else{
+            wordError(title: "Word not long enough", message: "The word must be 3 characters or longer!")
+            return
+        }
+        
+        
 
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
             usedWords.insert(answer, at: 0)
@@ -158,7 +184,20 @@ struct MainView: View {
         }
         
         wordsList.sort()
+        
+    
         return wordsList
+    }
+    
+    func compareLists(){
+        // iterate through the possibleWords
+        // if not in usedWords then add it to missing list
+        for word in possibleWords{
+            if !usedWords.contains(word){
+                answerList.append(word)
+            }
+        }
+        
     }
 
     func canFormWord(from root: String, word: String) -> Bool {
@@ -198,6 +237,14 @@ struct MainView: View {
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
 
         return misspelledRange.location == NSNotFound
+    }
+    
+    func charCheck(word: String) ->Bool{
+        if word.count > 2 {
+            return true
+        } else{
+            return false
+        }
     }
 
     func wordError(title: String, message: String) {
