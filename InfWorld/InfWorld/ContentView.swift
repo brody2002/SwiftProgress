@@ -14,6 +14,9 @@ struct ColorStringPair: Hashable {
 
 //Global
 private var validWordsSet: Set<String> = []
+private var screenHeight = UIScreen.main.bounds.height
+private var screenWidth = UIScreen.main.bounds.width
+
 
 func loadDictionary() {
     if let dictionaryURL = Bundle.main.url(forResource: "ValidWords", withExtension: "txt") {
@@ -23,6 +26,8 @@ func loadDictionary() {
         }
     }
 }
+
+
 
 
 class GridViewClass: ObservableObject{
@@ -40,11 +45,30 @@ class GridViewClass: ObservableObject{
     var row4 = Array(repeating: ColorStringPair(text: "?", color: .gray), count: 5)
     var row5 = Array(repeating: ColorStringPair(text: "?", color: .gray), count: 5)
     
+    @Published var keyColors: [String: Color] = [:]
+        
+    
     
     init(){
         loadDictionary()
         self.answerWord = validWordsSet.randomElement()?.uppercased() ?? "power"
         print("ANSWERWORD: \(self.answerWord)")
+    }
+    
+    func updateKeyColors(for inputWord: String, answerWord: String) {
+        objectWillChange.send()
+        for (index, letter) in inputWord.enumerated() {
+            let letterString = String(letter)
+            
+            if Array(answerWord)[index] == letter { // Correct letter and position
+                keyColors[letterString] = Color.green
+            } else if answerWord.contains(letterString) { // Correct letter, wrong position
+                keyColors[letterString] = Color.orange
+            } else {
+                keyColors[letterString] = Color.gray
+            }
+        }
+        print("new dict -> \(keyColors)")
     }
     
     func wordChecker(){
@@ -142,7 +166,6 @@ class GridViewClass: ObservableObject{
             
     }
 }
-
 struct GridView: View {
     
     let rows: Int
@@ -213,6 +236,21 @@ struct WordSquare : View {
     }
 }
 
+struct KeyboardSquare : View {
+    @State var inputChar: String
+    @State var inputColor: Color
+    @State var inputSize: CGFloat
+    
+    var body: some View {
+        Text(inputChar)
+            .frame(width: inputSize * 1.2, height: inputSize * 2.0) // Set frame size here
+            .foregroundStyle(.white)
+            .font(.system(size: inputSize * 0.6))
+            .background(inputColor)
+            .cornerRadius(3)
+    }
+}
+
 
 struct HeaderBar: View{
     @Binding var attempt: Int
@@ -222,6 +260,7 @@ struct HeaderBar: View{
     @Binding var isKeyboardVisible: Bool
     @Binding var inputWord: String
     @Binding var answerWord: String
+    
     
     @State private var errorTitle = ""
     @State private var errorMessage = ""
@@ -252,21 +291,29 @@ struct HeaderBar: View{
                 
                 HStack{
                     if !showWinScreen && !showLoseScreen{
-                        TextField("Enter Word: ", text: $inputWord)
-                            .textCase(.uppercase)
+                        Spacer()
+                        Spacer()
+                        Button("ENTER"){
+                            inputGuess()
+                            
+                        }
+                            .frame(width: 100, height: 20)
+                            .padding()
+                            .foregroundStyle(Color.blue)
+                            .background(Color.white)
+                            .cornerRadius(10)
                             .multilineTextAlignment(.leading)
-                            .textCase(.uppercase)
                             .padding(.horizontal)
-                            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                                withAnimation {
-                                    isKeyboardVisible = true
-                                }
+                        
+                            .alert(errorTitle, isPresented: $showingError) {
+                                Button("OK") {}
+                            } message: {
+                                Text(errorMessage)
                             }
-                            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                                withAnimation {
-                                    isKeyboardVisible = false
-                                }
-                            }
+                            .allowsHitTesting(isKeyboardVisible ? false : true)
+                            .opacity(isKeyboardVisible ? 0.0 : 1.0)
+                        
+                            //responsible for editing grid
                             .onChange(of: inputWord) { newValue in
                                 inputWord = newValue.uppercased()
                                 inputWord =  String(inputWord.prefix(5))
@@ -282,25 +329,8 @@ struct HeaderBar: View{
                                 gridViewClass.visualRowChange(row: rowToInsert)
                                 
                             }
-                        Button("Enter: "){
-                            inputGuess()
-                            
-                        }
-                            .frame(width: 100, height: 20)
-                            .padding()
-                            .foregroundStyle(Color.blue)
-                            .background(Color.white)
-                            .cornerRadius(30)
-                            .multilineTextAlignment(.leading)
-                            .padding(.horizontal)
-                        
-                            .alert(errorTitle, isPresented: $showingError) {
-                                Button("OK") {}
-                            } message: {
-                                Text(errorMessage)
-                            }
-                            .allowsHitTesting(isKeyboardVisible ? false : true)
-                            .opacity(isKeyboardVisible ? 0.0 : 1.0)
+                            .padding(.top, 10)
+                            .shadow(radius: 3)
                         Spacer()
                         Spacer()
                     }
@@ -325,6 +355,7 @@ struct HeaderBar: View{
                         
                 }
                 Spacer()
+                    .frame(height: 15)
                 
             }
         }
@@ -361,7 +392,6 @@ struct HeaderBar: View{
     }
     
     
-    
     func inputGuess() {
         // Updates word
         
@@ -378,9 +408,9 @@ struct HeaderBar: View{
         
         
         gridViewClass.inputWord = inputWord.uppercased()
-        
         gridViewClass.wordChecker()
         gridViewClass.swapRows()
+        gridViewClass.updateKeyColors(for: inputWord, answerWord: answerWord)
         inputWord = ""
     }
     
@@ -389,43 +419,104 @@ struct HeaderBar: View{
 
 struct AppColors {
     static let keyboard = Color(red: 165/255, green: 165/255, blue: 165/255)
+    static let deleteButton = Color(red: 125/255, green: 125/225, blue: 125/255)
 }
 
 struct VisualKeyboard: View{
     private let keyboardRow1: [String] = ["Q","W","E","R","T","Y","U","I","O","P"]
     private let keyboardRow2: [String] = ["A","S","D","F","G","H","J","K","L"]
     private let keyboardRow3: [String] = ["Z","X","C","V","B","N","M"]
+    
+    let squareSize = screenWidth/15
+    
+    
+    @ObservedObject var gridViewClass: GridViewClass
+    @Binding var inputWord: String
+    @State var answerWord: String
+    
+    func inDict(_ inputChar: String) -> Color {
+        if let color = gridViewClass.keyColors[inputChar] {
+            print("Char: \(inputChar) is IN DICT with color \(color)")
+            return color
+        } else {
+            print("Char: \(inputChar) is NOT IN DICT, returning default color gray")
+            return AppColors.keyboard
+        }
+    }
 
-    let squareSize: CGFloat = 30 // Adjust this value as needed
 
+    
     var body: some View{
-        VStack{
-            HStack(spacing: 10){
+        VStack(spacing: -10){
+            HStack(spacing: 5){
                 ForEach(keyboardRow1, id: \.self ) { char in
-                    WordSquares(inputChar: char, inputColor: AppColors.keyboard, inputSize: squareSize)
-                        .frame(width: squareSize, height: squareSize) // Set the fixed size here
+                    ZStack{
+                        // make conditoinal to choose the correct color
+                        // we already have the input word and the answer from the contentView
+                        // compare them and make the right color
+                        
+                        
+                        
+                        KeyboardSquare(inputChar: char, inputColor: inDict(char), inputSize: squareSize)
+                            .frame(width: squareSize * 1.2, height: squareSize * 2)
+                            .onTapGesture {
+                                inputWord += String(char)
+                            }
+                            .onChange(of: gridViewClass.keyColors){
+                                print("dictionary changed")
+                            }
+                    }
+                    
+                    
                 }
-            }
-            
-            HStack(spacing: 10){
+            }.id(gridViewClass.keyColors)
+            HStack(spacing: 5){
                 Spacer()
                     .frame(height: 100)
                 ForEach(keyboardRow2, id: \.self ) { char in
-                    WordSquares(inputChar: char, inputColor: AppColors.keyboard, inputSize: squareSize)
-                        .frame(width: squareSize, height: squareSize)
+                    KeyboardSquare(inputChar: char, inputColor: inDict(char), inputSize: squareSize)
+                        .frame(width: squareSize * 1.2, height: squareSize * 2)
+                        .onTapGesture {
+                            inputWord += String(char)
+                        }
+
                 }
                 Spacer()
                     .frame(height: 100)
-            }
-            HStack(spacing:10){
+            }.id(gridViewClass.keyColors)
+            HStack(spacing:5){
                 Spacer(minLength: 50)
                 ForEach(keyboardRow3, id: \.self ) { char in
-                    WordSquares(inputChar: char, inputColor: AppColors.keyboard, inputSize: squareSize)
-                        .frame(width: squareSize, height: squareSize)
+                    KeyboardSquare(inputChar: char, inputColor: inDict(char), inputSize: squareSize)
+                        .frame(width: squareSize * 1.2, height: squareSize * 2)
+                        .onTapGesture {
+                            inputWord += String(char)
+                        }
+
+                }.id(gridViewClass.keyColors)
+                ZStack{
+                    Text("")
+                        .frame(width: squareSize * 1.2, height: squareSize * 2.0) // Set frame size here
+                        .foregroundStyle(.white)
+                        .font(.system(size: squareSize * 0.6))
+                        .background(Color.blue)
+                        .cornerRadius(3)
+                    Image(systemName: "delete.backward")
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(.white)
                 }
-                Spacer(minLength: 50)
+                .onTapGesture {
+                    if inputWord.count >= 1{
+                        inputWord.removeLast()
+                    }
+                    
+                }
+                
+                    
+                Spacer(minLength: 30)
             }
-        }.padding(.horizontal)
+        }
     }
 }
 
@@ -440,9 +531,10 @@ struct ContentView: View {
     @State var answerWord: String = ""
     @State var showWinScreen: Bool = false
     @State var showLoseScreen:Bool = false
+    @State var keyColors: [String: Color] = [:]
+    @State private var restartID = UUID()
     
-    @State private var restartID = UUID() 
-    
+
     
     var body: some View {
         NavigationStack{
@@ -453,9 +545,11 @@ struct ContentView: View {
                     Spacer(minLength: 10)
                     .opacity(isKeyboardVisible ? 0.0 : 1.0)
                     GridView(rows: 5, columns: 5, gridViewClass: gridViewClass)
+                        .frame(width:screenWidth * 0.92, height: screenHeight * 0.4)
                         .padding(.horizontal)
                     Spacer()
-                    VisualKeyboard()
+                    VisualKeyboard(gridViewClass: gridViewClass, inputWord: $inputWord, answerWord: answerWord)
+                        .frame(width:screenWidth * 0.6, height: screenHeight * 0.2)
                         .padding(.horizontal)
                     Spacer()
                         .frame(height: 20)
