@@ -39,6 +39,7 @@ struct MainView: View {
                         List {
                             Section {
                                 TextField("Enter your word: ", text: $newWord)
+                                    .textCase(.uppercase)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                                     .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
@@ -51,6 +52,9 @@ struct MainView: View {
                                             isKeyboardVisible = false
                                         }
                                     }
+                                    .onChange(of: newWord) { newValue in
+                                            newWord = newValue.uppercased()
+                                        }
                             }
                             
                             Section {

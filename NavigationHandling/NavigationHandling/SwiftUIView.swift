@@ -19,6 +19,7 @@ class PathStore {
 
     private let savePath = URL.documentsDirectory.appending(path: "SavedPath")
 
+    //retrieving the saved path using decodable
     init() {
         if let data = try? Data(contentsOf: savePath) {
             if let decoded = try? JSONDecoder().decode(NavigationPath.CodableRepresentation.self, from: data) {
@@ -31,6 +32,7 @@ class PathStore {
         path = NavigationPath()
     }
 
+    // Save path whenever changes to the path are made
     func save() {
         guard let representation = path.codable else { return }
 

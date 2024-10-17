@@ -31,6 +31,7 @@ struct ContentView: View {
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
         
         let allGood = misspelledRange.location == NSNotFound
+        
         return allGood
     }
     var body: some View {
