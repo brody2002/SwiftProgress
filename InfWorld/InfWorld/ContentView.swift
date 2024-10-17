@@ -43,7 +43,6 @@ class GridViewClass: ObservableObject{
     
     init(){
         loadDictionary()
-        print("set of words: \(validWordsSet)")
         self.answerWord = validWordsSet.randomElement()?.uppercased() ?? "power"
         print("ANSWERWORD: \(self.answerWord)")
     }
@@ -52,6 +51,7 @@ class GridViewClass: ObservableObject{
         inputList = []
         var inputColor: Color = Color.gray
         
+        //Color assigner
         for (index, letter) in inputWord.enumerated() {
             print("comparing letter -> \(Array(answerWord)[index]) with -> \(Array(inputWord)[index]) ")
             //Check if letter is the same as the slot for the answer word {}
@@ -65,6 +65,21 @@ class GridViewClass: ObservableObject{
                 print("enter")
                 showWinScreen = true
             }
+        }
+    }
+    
+    func visualRowChange(row: [ColorStringPair]){
+        objectWillChange.send()
+        switch attempt {
+            case 1:
+            print("updating row")
+            row1 = row
+            print("row1: \(row1)")
+            case 2: row2 = row
+            case 3: row3 = row
+            case 4: row4 = row
+            case 5: row5 = row
+            default: fatalError("Not on Valid Attempt Number! No Row Replaced")
         }
     }
     
@@ -168,7 +183,7 @@ struct GridView: View {
                     WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
                 }
             }
-        }
+        }.padding(.horizontal)
     }
 }
 struct WordSquare : View {
@@ -200,6 +215,7 @@ struct WordSquare : View {
 
 
 struct HeaderBar: View{
+    @Binding var attempt: Int
     @Binding var restartID: UUID
     @Binding var showWinScreen: Bool
     @Binding var showLoseScreen: Bool
@@ -211,7 +227,8 @@ struct HeaderBar: View{
     @State private var errorMessage = ""
     @State private var showingError = false
 
-    
+    @State var rowToMod: Int = 0
+    @State var rowToInsert = Array(repeating: ColorStringPair(text: "?", color: .gray), count: 5)
     
     @ObservedObject var gridViewClass: GridViewClass
     
@@ -251,8 +268,20 @@ struct HeaderBar: View{
                                 }
                             }
                             .onChange(of: inputWord) { newValue in
-                                    inputWord = newValue.uppercased()
-                                }
+                                inputWord = newValue.uppercased()
+                                inputWord =  String(inputWord.prefix(5))
+                                for index in 0..<5 {
+                                            if index < inputWord.count {
+                                                let character = inputWord[inputWord.index(inputWord.startIndex, offsetBy: index)]
+                                                rowToInsert[index] = ColorStringPair(text: String(character), color: Color.gray)
+                                            } else {
+                                                rowToInsert[index] = ColorStringPair(text: "?", color: Color.gray)
+                                            }
+                                        }
+                                //swap rows here
+                                gridViewClass.visualRowChange(row: rowToInsert)
+                                
+                            }
                         Button("Enter: "){
                             inputGuess()
                             
@@ -371,14 +400,14 @@ struct VisualKeyboard: View{
 
     var body: some View{
         VStack{
-            HStack(spacing: 5){
+            HStack(spacing: 10){
                 ForEach(keyboardRow1, id: \.self ) { char in
                     WordSquares(inputChar: char, inputColor: AppColors.keyboard, inputSize: squareSize)
                         .frame(width: squareSize, height: squareSize) // Set the fixed size here
                 }
             }
             
-            HStack{
+            HStack(spacing: 10){
                 Spacer()
                     .frame(height: 100)
                 ForEach(keyboardRow2, id: \.self ) { char in
@@ -388,7 +417,7 @@ struct VisualKeyboard: View{
                 Spacer()
                     .frame(height: 100)
             }
-            HStack{
+            HStack(spacing:10){
                 Spacer(minLength: 50)
                 ForEach(keyboardRow3, id: \.self ) { char in
                     WordSquares(inputChar: char, inputColor: AppColors.keyboard, inputSize: squareSize)
@@ -420,7 +449,7 @@ struct ContentView: View {
             ZStack{
                 Color.white.ignoresSafeArea()
                 VStack{
-                    HeaderBar(restartID: $restartID, showWinScreen: $showWinScreen, showLoseScreen: $showLoseScreen, isKeyboardVisible: $isKeyboardVisible, inputWord: $inputWord, answerWord: $answerWord, gridViewClass: gridViewClass)
+                    HeaderBar(attempt: $attempt, restartID: $restartID, showWinScreen: $showWinScreen, showLoseScreen: $showLoseScreen, isKeyboardVisible: $isKeyboardVisible, inputWord: $inputWord, answerWord: $answerWord, gridViewClass: gridViewClass)
                     Spacer(minLength: 10)
                     .opacity(isKeyboardVisible ? 0.0 : 1.0)
                     GridView(rows: 5, columns: 5, gridViewClass: gridViewClass)
