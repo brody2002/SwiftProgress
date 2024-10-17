@@ -56,6 +56,7 @@ class GridViewClass: ObservableObject{
     }
     
     func updateKeyColors(for inputWord: String, answerWord: String) {
+        print("new Answerword -> \(answerWord)")
         objectWillChange.send()
         for (index, letter) in inputWord.enumerated() {
             let letterString = String(letter)
@@ -65,7 +66,7 @@ class GridViewClass: ObservableObject{
             } else if answerWord.contains(letterString) { // Correct letter, wrong position
                 keyColors[letterString] = Color.orange
             } else {
-                keyColors[letterString] = Color.gray
+                keyColors[letterString] = Color.gray.opacity(0.3)
             }
         }
         print("new dict -> \(keyColors)")
@@ -95,10 +96,7 @@ class GridViewClass: ObservableObject{
     func visualRowChange(row: [ColorStringPair]){
         objectWillChange.send()
         switch attempt {
-            case 1:
-            print("updating row")
-            row1 = row
-            print("row1: \(row1)")
+            case 1: row1 = row
             case 2: row2 = row
             case 3: row3 = row
             case 4: row4 = row
@@ -108,41 +106,47 @@ class GridViewClass: ObservableObject{
     }
     
     func swapRows(){
-        
-        objectWillChange.send()
-        
-        switch attempt {
+        withAnimation(.spring(response:0.6, dampingFraction: 1.2)){
+            objectWillChange.send()
             
-        case 1:
-            row1 = inputList
-            print("row1 was swapped into \(row1)")
-            attempt += 1
-            
-        case 2:
-            row2 = inputList
-            print("row2 was swapped into \(row2)")
-            attempt += 1
-            
-        case 3:
-            row3 = inputList
-            print("row3 was swapped into \(row3)")
-            attempt += 1
-            
-        case 4:
-            row4 = inputList
-            print("row4 was swapped into \(row4)")
-            attempt += 1
-            
-        case 5:
-            row5 = inputList
-            print("row5 was swapped into \(row5)")
-            if inputWord != answerWord {
-                showLoseScreen = true
-            }
-                
-        default:
-            fatalError("Not on Valid Attempt Number! No Row Replaced")
+                switch attempt {
+                    
+                case 1:
+                    row1 = inputList
+                    print("row1 was swapped into \(row1)")
+                    
+                        
+                    
+                    
+                case 2:
+                    row2 = inputList
+                    print("row2 was swapped into \(row2)")
+                    
+                    
+                case 3:
+                    row3 = inputList
+                    print("row3 was swapped into \(row3)")
+                    
+                    
+                case 4:
+                    row4 = inputList
+                    print("row4 was swapped into \(row4)")
+                    
+                    
+                case 5:
+                    row5 = inputList
+                    print("row5 was swapped into \(row5)")
+                    if inputWord != answerWord {
+                        showLoseScreen = true
+                    }
+                        
+                default:
+                    fatalError("Not on Valid Attempt Number! No Row Replaced")
+                }
         }
+        
+        
+        
     }
     
     func resetGame() {
@@ -157,7 +161,7 @@ class GridViewClass: ObservableObject{
             inputWord = ""
             attempt = 1
             showWinScreen = false
-            
+            keyColors = [:]
             answerWord = validWordsSet.randomElement()?.uppercased() ?? "POWER"
             print("New answer word: \(answerWord)")
             
@@ -172,38 +176,97 @@ struct GridView: View {
     let columns: Int
     
     
+    
     @ObservedObject var gridViewClass: GridViewClass
+    
+    
+    
 
     var body: some View {
         VStack {
             // Row 1
-            HStack {
-                ForEach(gridViewClass.row1, id: \.self) { tuple in
-                    WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+            ZStack {
+            
+                if gridViewClass.attempt == 1 {
+                    Rectangle()
+                        .stroke(lineWidth: 0)
+                        .frame(width: 370, height: 70)
+                        .cornerRadius(3)
+                        .transition(.scale)
+                        
+                        
+                }
+                HStack {
+                    ForEach(gridViewClass.row1, id: \.self) { tuple in
+                        WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+                            
+                    }
                 }
             }
+
             // Row 2
-            HStack {
-                ForEach(gridViewClass.row2, id: \.self) { tuple in
-                    WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+            ZStack {
+                if gridViewClass.attempt == 2 {
+                    Rectangle()
+                        .stroke(lineWidth: 0)
+                        .frame(width: 370, height: 70)
+                        .cornerRadius(3)
+                        
+                        
+                }
+                HStack {
+                    ForEach(gridViewClass.row2, id: \.self) { tuple in
+                        WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+                    }
                 }
             }
+
             // Row 3
-            HStack {
-                ForEach(gridViewClass.row3, id: \.self) { tuple in
-                    WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+            ZStack {
+                if gridViewClass.attempt == 3 {
+                    Rectangle()
+                        .stroke(lineWidth: 0)
+                        .frame(width: 370, height: 70)
+                        .cornerRadius(3)
+                        
+                        
+                }
+                HStack {
+                    ForEach(gridViewClass.row3, id: \.self) { tuple in
+                        WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+                    }
                 }
             }
+
             // Row 4
-            HStack {
-                ForEach(gridViewClass.row4, id: \.self) { tuple in
-                    WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+            ZStack {
+                if gridViewClass.attempt == 4 {
+                    Rectangle()
+                        .stroke(lineWidth: 0)
+                        .frame(width: 370, height: 70)
+                        .cornerRadius(3)
+                        
+                }
+                HStack {
+                    ForEach(gridViewClass.row4, id: \.self) { tuple in
+                        WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+                    }
                 }
             }
+
             // Row 5
-            HStack {
-                ForEach(gridViewClass.row5, id: \.self) { tuple in
-                    WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+            ZStack {
+                if gridViewClass.attempt == 5 {
+                    Rectangle()
+                        .stroke(lineWidth: 0)
+                        .frame(width: 370, height: 70)
+                        .cornerRadius(3)
+                        
+                }
+                HStack {
+                    ForEach(gridViewClass.row5, id: \.self) { tuple in
+                        WordSquare(inputChar: "\(tuple.text)",  inputColor: tuple.color, inputHeight: 1.0, inputWidth: 1.0)
+                    }
                 }
             }
         }.padding(.horizontal)
@@ -339,6 +402,7 @@ struct HeaderBar: View{
                             gridViewClass.resetGame()
                             showWinScreen = false
                             showLoseScreen = false
+                            answerWord = gridViewClass.answerWord
                             
                             
                         }
@@ -410,8 +474,16 @@ struct HeaderBar: View{
         gridViewClass.inputWord = inputWord.uppercased()
         gridViewClass.wordChecker()
         gridViewClass.swapRows()
-        gridViewClass.updateKeyColors(for: inputWord, answerWord: answerWord)
-        inputWord = ""
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
+            withAnimation(.spring(response: 0.6, dampingFraction: 1.2)){
+            gridViewClass.attempt += 1
+                gridViewClass.updateKeyColors(for: inputWord, answerWord: answerWord)
+                inputWord = ""
+            }
+           
+            
+        }
+        
     }
     
     
@@ -436,10 +508,8 @@ struct VisualKeyboard: View{
     
     func inDict(_ inputChar: String) -> Color {
         if let color = gridViewClass.keyColors[inputChar] {
-            print("Char: \(inputChar) is IN DICT with color \(color)")
             return color
         } else {
-            print("Char: \(inputChar) is NOT IN DICT, returning default color gray")
             return AppColors.keyboard
         }
     }

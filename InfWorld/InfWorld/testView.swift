@@ -8,9 +8,9 @@
 import SwiftUI
 
 
-
-
-#Preview {
-    @Previewable @StateObject var demo = GridViewClass()
-    GridView(rows: 5, columns: 5, gridViewClass: demo)
-}
+//
+//
+//#Preview {
+//    @Previewable @StateObject var demo = GridViewClass()
+//    GridView(rows: 5, columns: 5, gridViewClass: demo)
+//}
