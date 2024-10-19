@@ -55,7 +55,8 @@ struct pulseView: View {
             
             Button("Tap Me") {
                 withAnimation{
-                    animationAmount+=340
+                    animationAmount+=180
+                    
                 }
                     }
                     .padding(50)
