@@ -30,23 +30,49 @@ class Contact {
 
 // main View
 struct ContentView: View {
+    @State var inputSearch: String = ""
     @Environment(\.modelContext) var modelContext
-    @Query var ContactList : [Contact] = [Contact]()
+    @Query(sort: \Contact.firstName) var ContactList : [Contact] = [Contact]()
     @State var mainPath: NavigationPath = NavigationPath()
+    
+    
+    var filteredContacts: [Contact] {
+           if inputSearch.isEmpty {
+               return ContactList
+           } else {
+               return ContactList.filter { contact in
+                   contact.firstName.localizedStandardContains(inputSearch) ||
+                   contact.lastName.localizedStandardContains(inputSearch)
+               }
+           }
+       }
+    
+    
+    
+        //@Query(filter: #Predicate<User> { user in
+    //        user.name.localizedStandardContains("R") &&
+    //        user.city == "London"
+    //    }, sort: \User.name) var users: [User]
     
     var body: some View {
         NavigationStack(path: $mainPath){
             
             
             Form{
-                ForEach(ContactList, id: \.id){ contact in
-                    
-                        NavigationLink(destination: {
-                            EditContact(contact: contact)
-                        }, label: {Text("\(contact.firstName) \(contact.lastName)")})
-                        
-                    
-                }.onDelete(perform: deleteContact)
+                
+                Section("Find Contact"){
+                    TextField("Search 🔎", text: $inputSearch)
+                }
+                    .frame(height: 30)
+                
+                ForEach(filteredContacts, id: \.id) { contact in
+                                    NavigationLink(destination: {
+                                        EditContact(contact: contact)
+                                    }, label: {
+                                        Text("\(contact.firstName) \(contact.lastName)")
+                                    })
+                                }
+                                .onDelete(perform: deleteContact)
             }
             .navigationTitle("Contacts")
             .toolbar{
@@ -103,7 +129,7 @@ struct EditContact: View{
             Section{
                 TextField("City", text: $contact.city)
             }
-        }
+        }.navigationTitle("Edit Contact")
     }
 }
 
@@ -125,6 +151,7 @@ struct AddContact : View {
     @State var inputPhoneNumber = ""
     @State var inputEmail = ""
     @State var inputCity = ""
+    
     
     
     var body: some View{
@@ -152,5 +179,13 @@ struct AddContact : View {
 }
 
 #Preview {
-    ContentView()
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true) // Correctly initialize the model configuration
+        let container = try ModelContainer(for: Contact.self, configurations: config)
+        
+        return ContentView()
+            .modelContainer(container) // Attach the model container
+    } catch {
+        return Text("Failed to create container: \(error.localizedDescription)")
+    }
 }
