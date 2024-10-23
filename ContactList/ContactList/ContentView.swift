@@ -48,44 +48,42 @@ struct ContentView: View {
        }
     
     
-    
-        //@Query(filter: #Predicate<User> { user in
-    //        user.name.localizedStandardContains("R") &&
-    //        user.city == "London"
-    //    }, sort: \User.name) var users: [User]
+  
     
     var body: some View {
         NavigationStack(path: $mainPath){
-            
-            
-            Form{
+            ZStack{
                 
-                Section("Find Contact"){
-                    TextField("Search 🔎", text: $inputSearch)
+                Form{
+                    Section("Find Contact"){
+                        TextField("Search 🔎", text: $inputSearch)
+                    }
+                        .frame(height: 30)
+                    
+                    ForEach(filteredContacts, id: \.id) { contact in
+                                        NavigationLink(destination: {
+                                            EditContact(contact: contact)
+                                        }, label: {
+                                            Text("\(contact.firstName) \(contact.lastName)")
+                                        })
+                                    }
+                                    .onDelete(perform: deleteContact)
                 }
-                    .frame(height: 30)
-                
-                ForEach(filteredContacts, id: \.id) { contact in
-                                    NavigationLink(destination: {
-                                        EditContact(contact: contact)
-                                    }, label: {
-                                        Text("\(contact.firstName) \(contact.lastName)")
-                                    })
+                .navigationTitle("Contacts")
+                .toolbar{
+                    ToolbarItem(id: "AddContact", content: {
+                        NavigationLink("add" ,value: "AddContact")
+                            .navigationDestination(for: String.self){ name in
+                                if name == "AddContact"{
+                                    AddContact(ContactList: ContactList)
                                 }
-                                .onDelete(perform: deleteContact)
-            }
-            .navigationTitle("Contacts")
-            .toolbar{
-                ToolbarItem(id: "AddContact", content: {
-                    NavigationLink("add" ,value: "AddContact")
-                        .navigationDestination(for: String.self){ name in
-                            if name == "AddContact"{
-                                AddContact(ContactList: ContactList)
+                                
                             }
-                            
-                        }
-                })
+                    })
+                }
             }
+            
+            
                 
                 
                 
