@@ -26,6 +26,9 @@ struct SearchingView: View {
                 }
                 .searchable(text: $searchText, prompt: "Look for something")
                 .navigationTitle("Searching")
+                
+                
+                Button(action:{}, label:{Text("test button")})
             }
         }
     }

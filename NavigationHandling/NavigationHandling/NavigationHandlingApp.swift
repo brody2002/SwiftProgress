@@ -11,7 +11,7 @@ import SwiftUI
 struct NavigationHandlingApp: App {
     var body: some Scene {
         WindowGroup {
-            contextMenu()
+            MewTwo()
         }
 //        .modelContainer(for: PersonClass.self)
     }
