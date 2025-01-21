@@ -28,33 +28,33 @@ struct ContentView: View {
     var body: some View {
         NavigationStack(path: $navPath) {
             VStack {
-                ScrollView{
-                    ForEach(shoeData, id: \.name){ shoeInfo in
-                        VStack{
-                            HStack(alignment: .top){
-                                Spacer()
-                                    .frame(maxWidth: 1)
-                                RoundedRectangle(cornerRadius: 10)
-                                    .foregroundStyle(Color.pink)
-                                    .frame(width: 160, height: 100)
-                                Spacer()
-                                    .frame(width: 20)
-                                VStack(alignment: .leading){
-                                    Text("Shoe Name: \(shoeInfo.name)")
-                                    Text("Shoe Traction: \(shoeInfo.traction)")
-                                    Text("Shoe Cushion: \(shoeInfo.cushion)")
-                                    Text("Shoe Style: \(shoeInfo.style)")
+                    List{
+                        ForEach(shoeData, id: \.name){ shoeInfo in
+                            VStack{
+                                HStack(alignment: .top){
+                                    Spacer()
+                                        .frame(maxWidth: 1)
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .foregroundStyle(Color.pink)
+                                        .frame(width: 160, height: 100)
+                                    Spacer()
+                                        .frame(width: 20)
+                                    VStack(alignment: .leading){
+                                        Text("Shoe Name: \(shoeInfo.name)")
+                                        Text("Shoe Traction: \(shoeInfo.traction)")
+                                        Text("Shoe Cushion: \(shoeInfo.cushion)")
+                                        Text("Shoe Style: \(shoeInfo.style)")
+                                    }
+                                    Spacer()
                                 }
-                                Spacer()
+                                .onTapGesture {
+                                    //Show Details of Show
+                                }
+                                
                             }
-                            .onTapGesture {
-                                //Show Details of Show
-                            }
-                            
                         }
-                        Spacer().frame(height: 30)
+                        .onDelete(perform: deleteShoe)
                     }
-                }
                 
                 RoundedRectangle(cornerRadius: 10)
                     .frame(
@@ -70,7 +70,6 @@ struct ContentView: View {
                         showAddShoeSheet.toggle()
                     }
             }
-            .padding()
             .fontDesign(.rounded)
             .navigationTitle("Basketball Shoes")
             .sheet(isPresented: $showAddShoeSheet) {
@@ -80,6 +79,17 @@ struct ContentView: View {
         }
         
     }
+    func deleteShoe(at offsets: IndexSet) {
+            for index in offsets {
+                let shoeToDelete = shoeData[index]
+                modelContext.delete(shoeToDelete)
+            }
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error deleting shoe: \(error)")
+            }
+        }
     
     func loadShoesFirstTime() {
         if loadShoes == true{
