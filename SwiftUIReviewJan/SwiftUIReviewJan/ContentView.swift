@@ -13,7 +13,9 @@ struct ContentView: View {
     // Params
     @Binding var loadShoes: Bool
     // -----------------------
+    @Namespace private var namespace
     @State var navPath: NavigationPath = NavigationPath()
+    
     
     @State var inputShoeName: String?
     @State var inputShoeTraction: String?
@@ -24,6 +26,7 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     
     @State private var showAddShoeSheet: Bool = false
+    
     
     var body: some View {
         NavigationStack(path: $navPath) {
@@ -40,7 +43,7 @@ struct ContentView: View {
                                     Spacer()
                                         .frame(width: 20)
                                     VStack(alignment: .leading){
-                                        Text("Shoe Name: \(shoeInfo.name)")
+                                        Text("\(shoeInfo.name)")
                                         Text("Shoe Traction: \(shoeInfo.traction)")
                                         Text("Shoe Cushion: \(shoeInfo.cushion)")
                                         Text("Shoe Style: \(shoeInfo.style)")
@@ -49,7 +52,10 @@ struct ContentView: View {
                                 }
                                 .onTapGesture {
                                     //Show Details of Show
+                                    navPath.append(Destinations.detailView(shoe: shoeInfo))
+                                        
                                 }
+                                .matchedTransitionSource(id: shoeInfo.name, in: namespace)
                                 
                             }
                         }
@@ -76,6 +82,13 @@ struct ContentView: View {
                 AddShoeView(shoeList: shoeData, showAddShoeSheet: $showAddShoeSheet)
             }
             .onAppear(perform: loadShoesFirstTime)
+            .navigationDestination(for: Destinations.self) { dest in
+                switch dest {
+                case .detailView(let shoe):
+                    DetailShoeView(shoeObject: shoe)
+                        .navigationTransition(.zoom(sourceID: shoe.name, in: namespace))
+                }
+            }
         }
         
     }
